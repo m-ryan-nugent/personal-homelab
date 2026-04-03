@@ -1,0 +1,61 @@
+{
+    "clusterName": "Ryan's Homelab Cluster",
+    "environment": "Development",
+    "lastUpdated": "2026-04-02",
+    "nodes": [
+        {
+            "name": "pi-master",
+            "model": "Raspberry Pi 5",
+            "role": "Master",
+            "ip": "192.168.1.100",
+            "status": "Online",
+            "purpose": "K3s control plane"
+        },
+        {
+            "name": "pi-worker-1",
+            "model": "Raspberry Pi 5",
+            "role": "Worker",
+            "ip": "192.168.1.101",
+            "status": "Online",
+            "purpose": "Primary workload node"
+        },
+        {
+            "name": "pi-worker-2",
+            "model": "Raspberry Pi 4B",
+            "role": "Worker",
+            "ip": "192.168.1.102",
+            "status": "Online",
+            "purpose": "Secondary workload node"
+        },
+        {
+            "name": "pi-worker-3",
+            "model": "Raspberry Pi 4B",
+            "role": "Worker",
+            "ip": "192.168.1.103",
+            "status": "Online",
+            "purpose": "Secondary workload node"
+        }
+    ],
+    "services": [
+        {
+            "name": "Portainer",
+            "url": "#",
+            "description": "Cluster management UI"
+        },
+        {
+            "name": "Grafana",
+            "url": "#",
+            "description": "Monitoring and metrics"
+        },
+        {
+            "name": "Finance Tracker",
+            "url": "#",
+            "description": "Future personal application"
+        },
+        {
+            "name": "Tailscale",
+            "url": "#",
+            "description": "Remote access and networking"
+        }
+    ]
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Cluster Dashboard</title>
+        <link rel="stylesheet" href="./styles.css" />
+    </head>
+
+    <body>
+        <main class="dashboard">
+            <header class="hero">
+                <div>
+                    <p class="eyebrow">Homelab Dashboard</p>
+                    <h1 id="cluster-name">Loading cluster...</h1>
+                    <p class="subtitle">
+                        A monitor-friendly overview of cluster nodes and services.
+                    </p>
+                </div>
+
+                <div class="hero-meta">
+                    <div class="meta-card">
+                        <span class="meta-label">Environment</span>
+                        <span id="environment" class="meta-value">-</span>
+                    </div>
+
+                    <div class="meta-card">
+                        <span class="meta-label">Last Updated</span>
+                        <span id="last-updated" class="meta-value">-</span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="panel">
+                <div class="section-header">
+                    <h2>Nodes</h2>
+                    <p>Cluster inventory and current node roles.</p>
+                </div>
+
+                <div id="nodes-grid" class="nodes-grid">
+                    <p class="loading-text">Loading nodes...</p>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="section-header">
+                    <h2>Services</h2>
+                    <p>Quick links to cluster tools and applications.</p>
+                </div>
+
+                <div id="services-grid" class="services-grid">
+                    <p class="loading-text">Loading services...</p>
+                </div>
+            </section>
+        </main>
+
+        <template id="node-card-template">
+            <article class="card node-card">
+                <div class="card-header">
+                    <h3 class="card-title"></h3>
+                    <span class="status-badge"></span>
+                </div>
+
+                <dl class="details-list">
+                    <div class="detail-row">
+                        <dt>Role</dt>
+                        <dd class="node-role"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Model</dt>
+                        <dd class="node-model"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>IP</dt>
+                        <dd class="node-ip"></dd>
+                    </div>
+
+                    <div class="detail-row">
+                        <dt>Purpose</dt>
+                        <dd class="node-purpose"></dd>
+                    </div>
+                </dl>
+            </article>
+        </template>
+
+        <template id="service-card-template">
+            <a class="card service-card" target="_blank" rel="noreferrer">
+                <div class="card-header">
+                    <h3 class="card-title"></h3>
+                </div>
+                <p class="service-description"></p>
+            </a>
+        </template>
+
+        <script src="./app.js"></script>
+    </body>
+</html>
