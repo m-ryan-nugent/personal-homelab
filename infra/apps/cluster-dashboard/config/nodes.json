@@ -7,7 +7,7 @@
             "name": "pi-master",
             "model": "Raspberry Pi 5",
             "role": "Master",
-            "ip": "192.168.1.100",
+            "ip": "10.0.0.100",
             "status": "Online",
             "purpose": "K3s control plane"
         },
@@ -15,7 +15,7 @@
             "name": "pi-worker-1",
             "model": "Raspberry Pi 5",
             "role": "Worker",
-            "ip": "192.168.1.101",
+            "ip": "10.0.0.101",
             "status": "Online",
             "purpose": "Primary workload node"
         },
@@ -23,7 +23,7 @@
             "name": "pi-worker-2",
             "model": "Raspberry Pi 4B",
             "role": "Worker",
-            "ip": "192.168.1.102",
+            "ip": "10.0.0.102",
             "status": "Online",
             "purpose": "Secondary workload node"
         },
@@ -31,7 +31,7 @@
             "name": "pi-worker-3",
             "model": "Raspberry Pi 4B",
             "role": "Worker",
-            "ip": "192.168.1.103",
+            "ip": "10.0.0.103",
             "status": "Online",
             "purpose": "Secondary workload node"
         }

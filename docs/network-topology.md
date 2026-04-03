@@ -24,14 +24,19 @@ Each Raspberry Pi connects by Ethernet to a central unmanaged switch. The switch
 
 The cluster will use static IP addresses so that nodes can be reached consistently over SSH, K3s, and future internal services.
 
-### Planned IP Address Mapping
+## IP Address Mapping
 
-| Hostname      | Planned IP Address    | Role    |
-|---------------|-----------------------|---------|
-| pi-master     | Raspberry Pi 5        | Master  |
-| pi-worker-1   | Raspberry Pi 5        | Worker  |
-| pi-worker-2   | Raspberry Pi 4B       | Worker  |
-| pi-worker-3   | Raspberry Pi 4B       | Worker  |
+The cluster uses static IP addresses within the local `10.0.0.x` subnet.
+
+| Hostname      | IP Address   | Role    |
+|---------------|-------------|---------|
+| pi-master     | 10.0.0.100  | Master  |
+| pi-worker-1   | 10.0.0.101  | Worker  |
+| pi-worker-2   | 10.0.0.102  | Worker  |
+| pi-worker-3   | 10.0.0.103  | Worker  |
+
+Gateway: `10.0.0.1`  
+Subnet: `10.0.0.0/24`
 
 ## Why Wired Networking
 
@@ -55,3 +60,32 @@ Possible future improvements include:
 - DNS or local hostname resolution improvements
 - Internal ingress routing for services
 - Service exposure through a reverse proxy
+
+## Implementation Notes
+
+### Network Configuration Approach
+
+Initial attempts to assign static IPs using `/etc/dhcpcd.conf` were unsuccessful because the system was using NetworkManager for network configuration.
+
+Static IPs were ultimately configured using `nmcli` on the `netplan-eth0` connection.
+
+Example:
+
+```bash
+nmcli con mod netplan-eth0 \
+  ipv4.addresses 10.0.0.100/24 \
+  ipv4.gateway 10.0.0.1 \
+  ipv4.dns 10.0.0.1 \
+  ipv4.method manual
+```
+
+### Key Lessons
+- Raspberry Pi OS may use NetworkManager instead of `dhcpcd`
+- Configuration tools must match the active network manager
+- Incorrect subnet assumptions (e.g., `192.168.x.x` vs `10.0.0.x`) can break connectivity
+- Bringing interfaces down will temporarily drop SSH connections (expected behavior)
+
+### Recovery Strategies Used
+- Reconnecting via `.local` hostname
+- Checking router for DHCP-assigned IPs
+- Rebooting nodes to reapply configuration
