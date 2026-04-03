@@ -35,3 +35,33 @@ k8s/
     deployment.yaml
     service.yaml
 ```
+
+## Features
+- Cluster overview header
+- Node cards for each Raspberry Pi
+- Service cards for key tools and apps
+- Dark, monitor-friendly styling
+- JSON-driven rendering
+
+## Local Development
+
+Serve the app through a local HTTP server so the browser can fetch `nodes.json`.
+
+From this directory:
+
+```bash
+uv run python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/frontend/
+```
+
+## Planned Improvements
+- Replace placeholder service links
+- Add real-time status data
+- Add backend API
+- Deploy to K3s
+- Run in kiosk mode on the external monitor
