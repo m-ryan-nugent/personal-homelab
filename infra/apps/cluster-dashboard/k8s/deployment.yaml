@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-dashboard
+  namespace: homelab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-dashboard
+  template:
+    metadata:
+      labels:
+        app: cluster-dashboard
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: frontend-files
+              mountPath: /usr/share/nginx/html/frontend/index.html
+              subPath: index.html
+            - name: frontend-files
+              mountPath: /usr/share/nginx/html/frontend/styles.css
+              subPath: styles.css
+            - name: frontend-files
+              mountPath: /usr/share/nginx/html/frontend/app.js
+              subPath: app.js
+            - name: config-files
+              mountPath: /usr/share/nginx/html/config/nodes.json
+              subPath: nodes.json
+      volumes:
+        - name: frontend-files
+          configMap:
+            name: cluster-dashboard-frontend
+        - name: config-files
+          configMap:
+            name: cluster-dashboard-config

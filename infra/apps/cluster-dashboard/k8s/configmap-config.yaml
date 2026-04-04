@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-dashboard-config
+  namespace: homelab
+data:
+  nodes.json: |
+    {
+      "clusterName": "Ryan's Homelab Cluster",
+      "environment": "Development",
+      "lastUpdated": "2026-04-04",
+      "nodes": [
+        {
+          "name": "pi-master",
+          "model": "Raspberry Pi 5",
+          "role": "Master",
+          "ip": "10.0.0.100",
+          "status": "Online",
+          "purpose": "K3s control plane"
+        },
+        {
+          "name": "pi-worker-1",
+          "model": "Raspberry Pi 5",
+          "role": "Worker",
+          "ip": "10.0.0.101",
+          "status": "Online",
+          "purpose": "Primary workload node / display node"
+        },
+        {
+          "name": "pi-worker-2",
+          "model": "Raspberry Pi 4B",
+          "role": "Worker",
+          "ip": "10.0.0.102",
+          "status": "Online",
+          "purpose": "Secondary workload node"
+        },
+        {
+          "name": "pi-worker-3",
+          "model": "Raspberry Pi 4B",
+          "role": "Worker",
+          "ip": "10.0.0.103",
+          "status": "Online",
+          "purpose": "Secondary workload node"
+        }
+      ],
+      "services": [
+        {
+          "name": "Portainer",
+          "url": "#",
+          "description": "Cluster management UI"
+        },
+        {
+          "name": "Grafana",
+          "url": "#",
+          "description": "Monitoring and metrics"
+        },
+        {
+          "name": "Finance Tracker",
+          "url": "#",
+          "description": "Future personal application"
+        },
+        {
+          "name": "Tailscale",
+          "url": "#",
+          "description": "Remote access and networking"
+        }
+      ]
+    }
