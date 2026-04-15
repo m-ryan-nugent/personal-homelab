@@ -89,3 +89,13 @@ nmcli con mod netplan-eth0 \
 - Reconnecting via `.local` hostname
 - Checking router for DHCP-assigned IPs
 - Rebooting nodes to reapply configuration
+
+## Dashboard Access
+
+The cluster dashboard is exposed via a Kubernetes NodePort:
+
+- URL: http://10.0.0.101:30080/frontend/
+- accessible from any node in the cluster
+- used by the kiosk display node (`pi-worker-1`)
+
+This replaces the earlier local HTTP server approach.

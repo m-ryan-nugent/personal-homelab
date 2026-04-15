@@ -31,3 +31,15 @@ flowchart TD
 - Worker nodes will host applications, monitoring tools, and future experiments.
 - The custom `cluster-dashboard` is planned as the main user-facing UI for the external monitor.
 - Administration will primarily happen from a laptop over SSH and browser-based tools.
+
+## Display System (Kiosk Node)
+
+The dashboard is rendered on a dedicated node (`pi-worker-1`) using a minimal kiosk pipeline:
+
+```text
+systemd → getty → autologin → bash → cage → chromium → dashboard
+```
+
+This node is part of the Kubernetes cluster but also serves as the physical display driver.
+
+The dashboard itself is served from the cluster via a NodePort service and accessed locally by Chromium.

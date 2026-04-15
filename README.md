@@ -28,6 +28,16 @@ This project is a hands-on environment for:
 
 ---
 
+## Current State
+
+- 4-node Raspberry Pi cluster (K3s)
+- Static dashboard application
+- Deployed to Kubernetes (NodePort)
+- Dedicated kiosk display node
+- Fully automated boot-to-dashboard pipeline
+
+---
+
 ## Architecture
 
 ```text
@@ -76,6 +86,19 @@ scripts/  # Python utilities (uv)
 ## Status
 
 In progress - documentation + dashboard development
+
+---
+
+## Kiosk Display
+
+The dashboard runs on a dedicated Raspberry Pi using a minimal kiosk setup:
+
+- No desktop environment
+- No display manager
+- Uses `cage` + `chromium`
+- Launches automatically on boot
+
+See [Kiosk Setup](docs/kiosk-setup.md)
 
 ---
 
