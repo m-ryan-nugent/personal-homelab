@@ -45,7 +45,7 @@ k8s/
 
 ## Local Development
 
-Serve the app through a local HTTP server so the browser can fetch `nodes.json`.
+For local development, the dashboard can be served using a simple HTTP server.
 
 From this directory:
 
@@ -58,6 +58,35 @@ Then open:
 ```text
 http://localhost:8000/frontend/
 ```
+
+## Kubernetes Deployment (Current Setup)
+
+The dashboard is deployed to the K3s cluster using:
+- `nginx` (container)
+- ConfigMaps for static files
+- NodePort service
+
+It is accessible at:
+
+```text
+http://<node-ip>:30080/frontend/
+```
+
+Example:
+
+```text
+http://10.0.0.101:30080/frontend/
+```
+
+## Kiosk Display
+
+The dashboard is displayed on a dedicated Raspberry Pi node (`pi-worker-1`) using a minimal kiosk setup:
+
+- `cage` (Wayland compositor)
+- `chromium` in fullscreen mode
+- Automatic launch on boot
+
+The kiosk points to the Kubernetes-hosted dashboard, not a local server.
 
 ## Planned Improvements
 - Replace placeholder service links
