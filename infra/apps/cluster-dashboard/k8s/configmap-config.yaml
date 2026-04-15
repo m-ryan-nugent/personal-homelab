@@ -8,7 +8,7 @@ data:
     {
       "clusterName": "Ryan's Homelab Cluster",
       "environment": "Development",
-      "lastUpdated": "2026-04-04",
+      "lastUpdated": "2026-04-15",
       "nodes": [
         {
           "name": "pi-master",
