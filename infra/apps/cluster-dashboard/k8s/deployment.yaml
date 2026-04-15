@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: cluster-dashboard
-          image: cluster-dashboard:local
+          image: cluster-dashboard:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 80
