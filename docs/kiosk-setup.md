@@ -55,7 +55,7 @@ fi
 
 The kiosk should point at the K3s NodePort URL above, not a local `localhost` dashboard.
 
-The `/frontend/` suffix matters. Pointing Chromium at the NodePort root (`http://10.0.0.101:30080/`) returns a plain-text 404 because nginx in this app serves the UI from `/frontend/`.
+The explicit `/frontend/` suffix is still the preferred kiosk target. The dashboard nginx config now redirects the NodePort root to `/frontend/`, but keeping Chromium pointed at the full path avoids ambiguity and keeps the kiosk aligned with the app's real entrypoint.
 
 ### Remove keyring prompts
 
@@ -111,6 +111,7 @@ Verify:
 
 - `~/.bash_profile` still points to `http://10.0.0.101:30080/frontend/`
 - `curl -i http://10.0.0.101:30080/frontend/` returns dashboard HTML
+- `curl -i http://10.0.0.101:30080/` returns an HTTP redirect to `/frontend/`
 - `kubectl get svc,pods,endpoints -n homelab` shows a live `cluster-dashboard` backend
 
 If those checks pass but a rollout is still failing, inspect the Deployment state more closely:
@@ -123,12 +124,23 @@ kubectl describe pod -n homelab <failing-pod>
 
 ## Known Rollout Failure (April 2026)
 
+This section is historical context for the pre-GHCR deployment flow.
+
 One traced failure path looked like this:
 
 - The kiosk boot command had been launching the NodePort root URL instead of `/frontend/`, which produced the original 404 on the monitor.
 - After fixing the boot URL, the dashboard was confirmed to be served through K3s by checking the `cluster-dashboard` NodePort Service, Pod, and Endpoints from `pi-master`.
 - The Deployment itself was in a partial rollout: the live dashboard was still coming from an older healthy pod on `pi-worker-1`, while Kubernetes was also trying to start a newer `cluster-dashboard:v3` pod on `pi-worker-3`.
 - That new pod failed because the image was only present locally on `pi-worker-1` and was missing on `pi-worker-3`.
+
+That failure mode should no longer be the default operating model. The current manifests pull `ghcr.io/m-ryan-nugent/cluster-dashboard:latest` with `imagePullPolicy: IfNotPresent` and do not pin the pod to `pi-worker-1`.
+
+Current rollout expectation:
+
+- push dashboard changes to GitHub
+- let GitHub Actions publish the GHCR image
+- restart the Deployment when you want the cluster to pull the newest image
+- keep the kiosk URL fixed at `http://10.0.0.101:30080/frontend/`
 
 Important detail for K3s/containerd:
 
@@ -140,4 +152,12 @@ Useful node-side check:
 
 ```bash
 sudo k3s ctr -n k8s.io images ls | grep cluster-dashboard
+```
+
+For the current registry-backed flow, prefer these checks instead:
+
+```bash
+kubectl rollout restart deployment/cluster-dashboard -n homelab
+kubectl rollout status deployment/cluster-dashboard -n homelab
+kubectl get pods -n homelab -o wide
 ```

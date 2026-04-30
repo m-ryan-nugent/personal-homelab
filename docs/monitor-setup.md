@@ -8,6 +8,8 @@ The current setup no longer uses LXDE autostart or a local systemd HTTP server. 
 
 The authoritative setup is documented in [kiosk-setup.md](kiosk-setup.md).
 
+The dashboard container image is now published through GitHub Container Registry and pulled by the cluster at rollout time rather than relying on a node-local image.
+
 ## Active Launch Path
 
 ```text
@@ -25,6 +27,8 @@ Relevant Chromium target:
 ```text
 http://10.0.0.101:30080/frontend/
 ```
+
+The NodePort root now redirects to `/frontend/`, but the kiosk should continue to use the explicit `/frontend/` URL.
 
 ## Legacy Note
 
@@ -58,9 +62,11 @@ The dashboard issue traced through two separate layers:
 
 The working dashboard traffic was still being handled by an older healthy pod on `pi-worker-1` using a local image, while Kubernetes was trying and failing to start a newer `cluster-dashboard:v3` pod on `pi-worker-3` where that image did not exist.
 
+That was the old node-local image workflow. The current Deployment uses the GHCR image and is no longer intended to be pinned to `pi-worker-1`.
+
 Operational takeaway:
 
 - Keep the kiosk pointed at `http://10.0.0.101:30080/frontend/`
 - Verify rollout health with `kubectl get deploy,rs,pods -n homelab -o wide`
-- Treat the image on `pi-worker-1` as `docker.io/library/cluster-dashboard:local` when inspecting or retagging it in containerd
-- Pin the dashboard Deployment to `pi-worker-1` when using the locally tagged `v3` image there
+- Restart the Deployment after a new GHCR build if you want the cluster to pull the newest `latest` image
+- Use [k8s-deployment.md](k8s-deployment.md) for the current registry-backed deployment procedure
