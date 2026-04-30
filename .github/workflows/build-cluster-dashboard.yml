@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - v*
     paths:
       - .github/workflows/build-cluster-dashboard.yml
       - infra/apps/cluster-dashboard/**
@@ -41,6 +43,9 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/cluster-dashboard
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=semver,pattern={{version}},value={{tag}}
+            type=semver,pattern={{major}}.{{minor}},value={{tag}}
             type=sha,format=short
 
       - name: Build and push image
