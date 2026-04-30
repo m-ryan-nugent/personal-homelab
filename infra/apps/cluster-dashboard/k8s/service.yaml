@@ -7,7 +7,8 @@ spec:
   selector:
     app: cluster-dashboard
   ports:
-    - port: 80
-      targetPort: 80
+    - name: http
+      port: 80
+      targetPort: http
       nodePort: 30080
   type: NodePort
