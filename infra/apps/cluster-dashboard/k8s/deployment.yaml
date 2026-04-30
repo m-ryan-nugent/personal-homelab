@@ -13,9 +13,11 @@ spec:
       labels:
         app: cluster-dashboard
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: pi-worker-1
       containers:
         - name: cluster-dashboard
-          image: cluster-dashboard:v2
+          image: docker.io/library/cluster-dashboard:v3
           imagePullPolicy: Never
           ports:
             - containerPort: 80
