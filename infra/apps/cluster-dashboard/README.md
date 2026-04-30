@@ -17,7 +17,7 @@ Version 1 is intentionally simple:
 - frontend: vanilla HTML, CSS, JavaScript
 - backend: placeholder only
 - data source: static JSON config
-- deployment: local development first, Kubernetes later
+- deployment: containerized and published to GitHub Container Registry
 
 ## Structure
 
@@ -59,12 +59,30 @@ Then open:
 http://localhost:8000/frontend/
 ```
 
-## Kubernetes Deployment (Current Setup)
+## Container Image
 
-The dashboard is deployed to the K3s cluster using:
-- `nginx` (container)
-- ConfigMaps for static files
-- NodePort service
+The production image is built from this directory and published to GitHub Container Registry:
+
+```text
+ghcr.io/m-ryan-nugent/cluster-dashboard:latest
+```
+
+The GitHub Actions workflow lives at:
+
+```text
+.github/workflows/build-cluster-dashboard.yml
+```
+
+It publishes a multi-architecture image for Raspberry Pi nodes and also adds a commit-based SHA tag for rollback/debugging.
+
+## Kubernetes Deployment
+
+The dashboard is deployed to K3s using:
+
+- `nginx` as the static web server
+- a ConfigMap for `config/nodes.json`
+- a Deployment that pulls from GHCR
+- a NodePort service on port `30080`
 
 The nginx container serves the dashboard from `/frontend/` and the config JSON from `/config/nodes.json`.
 
@@ -80,52 +98,40 @@ Example:
 http://10.0.0.101:30080/frontend/
 ```
 
+The root URL now redirects to `/frontend/`, but the kiosk can continue using the explicit `/frontend/` path.
+
 This repo's nginx config should return dashboard HTML for that URL. A browser page that shows raw text `404 page not found` means the request is reaching some other server or a stale cluster route.
 
 ## Rollout Notes
 
-The kiosk must load the app at `/frontend/`:
+The earlier node-local image workflow has been removed from the manifests.
+
+The Deployment no longer depends on:
+
+- `nodeSelector` or `nodeName` pinning for `pi-worker-1`
+- `imagePullPolicy: Never`
+- retagging images directly inside K3s/containerd
+
+The expected rollout flow is now:
+
+1. Push dashboard changes to `main`.
+2. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:latest`.
+3. Apply manifests or restart the Deployment.
+4. K3s pulls the image on whichever node schedules the pod.
+
+The kiosk should continue to load the app at:
 
 ```text
 http://10.0.0.101:30080/frontend/
 ```
 
-Pointing Chromium at the NodePort root instead of `/frontend/` produces a plain-text 404 even when the Service itself is reachable.
-
-An April 2026 incident exposed an additional Kubernetes-specific failure mode:
-
-- The NodePort service, pod, and endpoint were healthy enough to serve the dashboard.
-- The visible dashboard traffic was still coming from an older healthy pod on `pi-worker-1`.
-- At the same time, the Deployment was trying and failing to roll out a newer `cluster-dashboard:v3` pod on `pi-worker-3` because the local image was missing there.
-
-When inspecting images directly in K3s/containerd on `pi-worker-1`, the working image was stored as:
-
-```text
-docker.io/library/cluster-dashboard:local
-```
-
-The recovery path was:
-
-```bash
-sudo k3s ctr -n k8s.io images tag \
-    docker.io/library/cluster-dashboard:local \
-    docker.io/library/cluster-dashboard:v3
-```
-
-After tagging, keep the Deployment aligned with that node-local image:
-
-- use `docker.io/library/cluster-dashboard:v3` as the image reference
-- pin the Deployment to `pi-worker-1` so the kiosk node runs the dashboard pod with the known-good local image
-
-If the Deployment continues to use node-local images, frontend or nginx changes are not picked up automatically by the cluster. Rebuild or retag the image in K3s/containerd on the target node before restarting the deployment.
-
 Useful checks:
 
 ```bash
 curl -i http://10.0.0.101:30080/frontend/
-kubectl get svc,pods,endpoints -n homelab
-kubectl get deploy,rs,pods -n homelab -o wide
-sudo k3s ctr -n k8s.io images ls | grep cluster-dashboard
+kubectl get deploy,svc,pods,endpoints -n homelab -o wide
+kubectl rollout status deployment/cluster-dashboard -n homelab
+kubectl describe pod -n homelab -l app=cluster-dashboard
 ```
 
 ## Kiosk Display
@@ -142,5 +148,4 @@ The kiosk points to the Kubernetes-hosted dashboard, not a local server.
 - Replace placeholder service links
 - Add real-time status data
 - Add backend API
-- Deploy to K3s
 - Run in kiosk mode on the external monitor

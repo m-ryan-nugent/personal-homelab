@@ -32,7 +32,7 @@ This project is a hands-on environment for:
 
 - 4-node Raspberry Pi cluster (K3s)
 - Static dashboard application
-- Deployed to Kubernetes (NodePort)
+- Deployed to Kubernetes (NodePort + GHCR image)
 - Dedicated kiosk display node
 - Fully automated boot-to-dashboard pipeline
 
@@ -76,16 +76,36 @@ scripts/  # Python utilities (uv)
 
 ## Stack
 
-- K3s (planned)
+- K3s
 - `uv` (Python package management)
-- FastAPI (future backend)
+- GitHub Actions + GitHub Container Registry
 - Vanilla HTML/CSS/JS
 
 ---
 
 ## Status
 
-In progress - documentation + dashboard development
+In progress - cluster operations, dashboard deployment, and documentation
+
+## Dashboard Deployment
+
+The cluster dashboard is built as a static nginx image and published to:
+
+```text
+ghcr.io/m-ryan-nugent/cluster-dashboard:latest
+```
+
+Kubernetes manifests for the app live under:
+
+```text
+infra/apps/cluster-dashboard/k8s/
+```
+
+Deployment notes and rollout commands live in:
+
+```text
+docs/k8s-deployment.md
+```
 
 ---
 
