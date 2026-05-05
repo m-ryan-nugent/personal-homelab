@@ -76,6 +76,86 @@ http://10.0.0.101:30080/frontend/
 
 The nginx config also redirects `/` to `/frontend/`, but keeping the kiosk on the explicit path avoids ambiguity.
 
+## Update Dashboard Temperatures
+
+The dashboard can now be refreshed from the repo by collecting Raspberry Pi temperatures over SSH and syncing them into the ConfigMap source file:
+
+```bash
+cd ~/personal-homelab
+uv run python scripts/src/sync_dashboard_temperatures.py
+kubectl apply -f infra/apps/cluster-dashboard/k8s/configmap-config.yaml
+```
+
+Run the collector from a machine that already has key-based SSH access to the Pi nodes. It uses non-interactive `ssh` and will fail fast if it would need a password prompt.
+
+Useful variants:
+
+```bash
+uv run python scripts/src/sync_dashboard_temperatures.py --dry-run
+uv run python scripts/src/sync_dashboard_temperatures.py --node pi-worker-1
+```
+
+The Deployment now mounts the dashboard config directory directly instead of using `subPath`, so ConfigMap updates can propagate into the running pod without restarting the Deployment.
+
+## Automate Temperature Updates With a CronJob
+
+The repo now includes a Kubernetes-owned temperature sync path so the cluster can refresh dashboard temperatures without relying on a laptop:
+
+- `infra/apps/cluster-dashboard/k8s/configmap-temperature-sync-script.yaml`
+- `infra/apps/cluster-dashboard/k8s/temperature-sync-rbac.yaml`
+- `infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml`
+
+The `CronJob` runs every 5 minutes, SSHes to the Pi nodes using a mounted private key, and patches the `cluster-dashboard-config` ConfigMap directly.
+
+### 1. Create a dedicated SSH key for the CronJob
+
+Generate a separate key for the in-cluster job rather than reusing your laptop key:
+
+```bash
+ssh-keygen -t ed25519 \
+  -f ~/.ssh/id_ed25519_homelab_temperature_sync \
+  -C "cluster-dashboard-temperature-sync"
+```
+
+Install the public key on each node:
+
+```bash
+for host in 10.0.0.100 10.0.0.101 10.0.0.102 10.0.0.103; do
+  cat ~/.ssh/id_ed25519_homelab_temperature_sync.pub | ssh pi@"$host" \
+    'umask 077; mkdir -p ~/.ssh; touch ~/.ssh/authorized_keys; cat >> ~/.ssh/authorized_keys'
+done
+```
+
+### 2. Create the Kubernetes secret with the private key
+
+```bash
+kubectl create secret generic cluster-dashboard-ssh \
+  -n homelab \
+  --from-file=id_ed25519=$HOME/.ssh/id_ed25519_homelab_temperature_sync
+```
+
+### 3. Apply the automation manifests
+
+```bash
+kubectl apply -f infra/apps/cluster-dashboard/k8s/configmap-temperature-sync-script.yaml
+kubectl apply -f infra/apps/cluster-dashboard/k8s/temperature-sync-rbac.yaml
+kubectl apply -f infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml
+```
+
+### 4. Trigger one manual run before waiting for the schedule
+
+```bash
+kubectl create job \
+  --from=cronjob/cluster-dashboard-temperature-sync \
+  cluster-dashboard-temperature-sync-manual \
+  -n homelab
+
+kubectl logs -n homelab job/cluster-dashboard-temperature-sync-manual
+kubectl get configmap cluster-dashboard-config -n homelab -o yaml
+```
+
+If the manual job succeeds, the scheduled `CronJob` will keep updating temperatures in the live dashboard ConfigMap.
+
 ## Release Checklist
 
 Use this flow for each dashboard release:

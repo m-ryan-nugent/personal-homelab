@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cluster-dashboard-temperature-sync
+  namespace: homelab
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          serviceAccountName: cluster-dashboard-temperature-sync
+          restartPolicy: Never
+          containers:
+            - name: sync-temperatures
+              image: python:3.14-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - apk add --no-cache openssh-client >/dev/null && python /app/sync_temperatures.py
+              env:
+                - name: SSH_USER
+                  value: pi
+                - name: SSH_KEY_PATH
+                  value: /ssh/id_ed25519
+                - name: DASHBOARD_CONFIG_PATH
+                  value: /config/nodes.json
+                - name: CONFIGMAP_NAME
+                  value: cluster-dashboard-config
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+              volumeMounts:
+                - name: sync-script
+                  mountPath: /app
+                  readOnly: true
+                - name: dashboard-config
+                  mountPath: /config
+                  readOnly: true
+                - name: ssh-key
+                  mountPath: /ssh
+                  readOnly: true
+          volumes:
+            - name: sync-script
+              configMap:
+                name: cluster-dashboard-temperature-sync-script
+                defaultMode: 0555
+            - name: dashboard-config
+              configMap:
+                name: cluster-dashboard-config
+            - name: ssh-key
+              secret:
+                secretName: cluster-dashboard-ssh
+                defaultMode: 0400
+                items:
+                  - key: id_ed25519
+                    path: id_ed25519

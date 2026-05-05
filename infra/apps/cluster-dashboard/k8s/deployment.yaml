@@ -34,8 +34,7 @@ spec:
             periodSeconds: 20
           volumeMounts:
             - name: config-files
-              mountPath: /usr/share/nginx/html/config/nodes.json
-              subPath: nodes.json
+              mountPath: /usr/share/nginx/html/config
       volumes:
         - name: config-files
           configMap:

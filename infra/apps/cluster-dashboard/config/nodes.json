@@ -1,7 +1,7 @@
 {
     "clusterName": "Ryan's Homelab Cluster",
     "environment": "Development",
-    "lastUpdated": "2026-05-05",
+    "lastUpdated": "2026-05-05 22:42 UTC",
     "nodes": [
         {
             "name": "pi-master",
@@ -9,7 +9,8 @@
             "role": "Master",
             "ip": "10.0.0.100",
             "status": "Online",
-            "purpose": "K3s control plane"
+            "purpose": "K3s control plane",
+            "temperatureC": 30.1
         },
         {
             "name": "pi-worker-1",
@@ -17,7 +18,8 @@
             "role": "Worker",
             "ip": "10.0.0.101",
             "status": "Online",
-            "purpose": "Primary workload node"
+            "purpose": "Primary workload node",
+            "temperatureC": 34.5
         },
         {
             "name": "pi-worker-2",
@@ -25,7 +27,8 @@
             "role": "Worker",
             "ip": "10.0.0.102",
             "status": "Online",
-            "purpose": "Secondary workload node"
+            "purpose": "Secondary workload node",
+            "temperatureC": 29.2
         },
         {
             "name": "pi-worker-3",
@@ -33,7 +36,8 @@
             "role": "Worker",
             "ip": "10.0.0.103",
             "status": "Online",
-            "purpose": "Secondary workload node"
+            "purpose": "Secondary workload node",
+            "temperatureC": 29.2
         }
     ],
     "services": [

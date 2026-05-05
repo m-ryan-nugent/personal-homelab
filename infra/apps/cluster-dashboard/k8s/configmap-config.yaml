@@ -6,69 +6,73 @@ metadata:
 data:
   nodes.json: |
     {
-      "clusterName": "Ryan's Homelab Cluster",
-      "environment": "Development",
-      "lastUpdated": "2026-05-05",
-      "nodes": [
-        {
-          "name": "pi-master",
-          "model": "Raspberry Pi 5",
-          "role": "Master",
-          "ip": "10.0.0.100",
-          "status": "Online",
-          "purpose": "K3s control plane"
-        },
-        {
-          "name": "pi-worker-1",
-          "model": "Raspberry Pi 5",
-          "role": "Worker",
-          "ip": "10.0.0.101",
-          "status": "Online",
-          "purpose": "Primary workload node / display node"
-        },
-        {
-          "name": "pi-worker-2",
-          "model": "Raspberry Pi 4B",
-          "role": "Worker",
-          "ip": "10.0.0.102",
-          "status": "Online",
-          "purpose": "Secondary workload node"
-        },
-        {
-          "name": "pi-worker-3",
-          "model": "Raspberry Pi 4B",
-          "role": "Worker",
-          "ip": "10.0.0.103",
-          "status": "Online",
-          "purpose": "Secondary workload node"
-        }
-      ],
-      "services": [
-        {
-          "name": "Cluster Dashboard",
-          "url": "http://10.0.0.101:30080/frontend/",
-          "status": "Live",
-          "description": "Current kiosk dashboard served from K3s through the homelab NodePort"
-        },
-        {
-          "name": "Portainer",
-          "status": "Planned",
-          "description": "Cluster management UI once it is deployed into the homelab"
-        },
-        {
-          "name": "Grafana",
-          "status": "Planned",
-          "description": "Monitoring and metrics UI once the monitoring stack is running"
-        },
-        {
-          "name": "Finance Tracker",
-          "status": "Planned",
-          "description": "Future personal application after the cluster app platform is settled"
-        },
-        {
-          "name": "Tailscale",
-          "status": "External",
-          "description": "Remote access and networking control plane; add a direct admin URL when you want it on the dashboard"
-        }
-      ]
+        "clusterName": "Ryan's Homelab Cluster",
+        "environment": "Development",
+        "lastUpdated": "2026-05-05 22:42 UTC",
+        "nodes": [
+            {
+                "name": "pi-master",
+                "model": "Raspberry Pi 5",
+                "role": "Master",
+                "ip": "10.0.0.100",
+                "status": "Online",
+                "purpose": "K3s control plane",
+                "temperatureC": 30.1
+            },
+            {
+                "name": "pi-worker-1",
+                "model": "Raspberry Pi 5",
+                "role": "Worker",
+                "ip": "10.0.0.101",
+                "status": "Online",
+                "purpose": "Primary workload node",
+                "temperatureC": 34.5
+            },
+            {
+                "name": "pi-worker-2",
+                "model": "Raspberry Pi 4B",
+                "role": "Worker",
+                "ip": "10.0.0.102",
+                "status": "Online",
+                "purpose": "Secondary workload node",
+                "temperatureC": 29.2
+            },
+            {
+                "name": "pi-worker-3",
+                "model": "Raspberry Pi 4B",
+                "role": "Worker",
+                "ip": "10.0.0.103",
+                "status": "Online",
+                "purpose": "Secondary workload node",
+                "temperatureC": 29.2
+            }
+        ],
+        "services": [
+            {
+                "name": "Cluster Dashboard",
+                "url": "http://10.0.0.101:30080/frontend/",
+                "status": "Live",
+                "description": "Current kiosk dashboard served from K3s through the homelab NodePort"
+            },
+            {
+                "name": "Portainer",
+                "status": "Planned",
+                "description": "Cluster management UI once it is deployed into the homelab"
+            },
+            {
+                "name": "Grafana",
+                "status": "Planned",
+                "description": "Monitoring and metrics UI once the monitoring stack is running"
+            },
+            {
+                "name": "Finance Tracker",
+                "status": "Planned",
+                "description": "Future personal application after the cluster app platform is settled"
+            },
+            {
+                "name": "Tailscale",
+                "status": "External",
+                "description": "Remote access and networking control plane; add a direct admin URL when you want it on the dashboard"
+            }
+        ]
     }

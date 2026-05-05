@@ -80,6 +80,40 @@ When you are ready to surface Raspberry Pi temperatures, add an optional `temper
 
 The node card will show the temperature row automatically when that field is present.
 
+To collect those temperatures from the Pis over SSH and sync them into both the local JSON file and the Kubernetes ConfigMap, run:
+
+```bash
+uv run python scripts/src/sync_dashboard_temperatures.py
+```
+
+Run that command from a machine that already has key-based SSH access to the Pi nodes. The script uses non-interactive `ssh` and will not prompt for passwords.
+
+Useful options:
+
+```bash
+uv run python scripts/src/sync_dashboard_temperatures.py --dry-run
+uv run python scripts/src/sync_dashboard_temperatures.py --node pi-worker-1
+uv run python scripts/src/sync_dashboard_temperatures.py --ssh-user pi
+```
+
+The script tries `vcgencmd measure_temp` first and falls back to `/sys/class/thermal/thermal_zone0/temp` if needed.
+
+After it updates `infra/apps/cluster-dashboard/k8s/configmap-config.yaml`, apply the ConfigMap so the running dashboard picks up the new values:
+
+```bash
+kubectl apply -f infra/apps/cluster-dashboard/k8s/configmap-config.yaml
+```
+
+The Deployment now mounts the entire `/usr/share/nginx/html/config` directory instead of a `subPath`, so ConfigMap updates can refresh in the running pod without a rollout restart.
+
+If you want the cluster to refresh temperatures automatically, the Kubernetes manifests now include:
+
+- `k8s/configmap-temperature-sync-script.yaml`
+- `k8s/temperature-sync-rbac.yaml`
+- `k8s/cronjob-temperature-sync.yaml`
+
+That `CronJob` reads the current `nodes.json` from the live dashboard ConfigMap, collects temperatures over SSH using a mounted key, and patches the ConfigMap in-cluster every 5 minutes.
+
 ## Local Development
 
 For local development, the dashboard can be served using a simple HTTP server.
@@ -192,6 +226,5 @@ The kiosk points to the Kubernetes-hosted dashboard, not a local server.
 
 ## Planned Improvements
 - Add real-time status data
-- Source live node temperatures from the cluster or a lightweight collector
 - Add backend API
 - Run in kiosk mode on the external monitor
