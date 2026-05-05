@@ -1,0 +1,39 @@
+name: Docs Check
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/docs-check.yml
+      - scripts/src/release_dashboard.py
+      - infra/apps/cluster-dashboard/k8s/deployment.yaml
+      - docs/k8s-deployment.md
+      - infra/apps/cluster-dashboard/README.md
+      - README.md
+      - docs/kiosk-setup.md
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/docs-check.yml
+      - scripts/src/release_dashboard.py
+      - infra/apps/cluster-dashboard/k8s/deployment.yaml
+      - docs/k8s-deployment.md
+      - infra/apps/cluster-dashboard/README.md
+      - README.md
+      - docs/kiosk-setup.md
+
+jobs:
+  cluster-dashboard-release-drift:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Check dashboard release reference drift
+        run: python scripts/src/release_dashboard.py --check

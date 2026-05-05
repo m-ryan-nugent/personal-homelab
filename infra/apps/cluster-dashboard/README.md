@@ -121,7 +121,7 @@ The Deployment no longer depends on:
 The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
-2. Create and push a release tag such as `v1.0.0`.
+2. Create and push a release tag such as `<version>`.
 3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1`.
 4. Apply the updated manifest.
 5. K3s pulls the image on whichever node schedules the pod.

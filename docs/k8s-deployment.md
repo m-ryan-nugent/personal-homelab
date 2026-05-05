@@ -13,7 +13,7 @@ That removes the old rollout constraint where the pod had to stay on `pi-worker-
 ## Deployment Flow
 
 1. Push changes under `infra/apps/cluster-dashboard/` to `main`.
-2. Create and push a release tag such as `v1.0.0`.
+2. Create and push a release tag such as `<version>`.
 3. GitHub Actions builds and publishes the tagged dashboard image to GHCR.
 4. Update the Kubernetes manifest to that explicit tag.
 5. Apply the Kubernetes manifests.
@@ -31,6 +31,12 @@ Use the release helper to update the pinned image reference across the repo befo
 
 ```bash
 uv run python scripts/src/release_dashboard.py <version>
+```
+
+To verify the tracked dashboard docs and manifest are still aligned, run:
+
+```bash
+uv run python scripts/src/release_dashboard.py --check
 ```
 
 ## One-Time GitHub Setup
