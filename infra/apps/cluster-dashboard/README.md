@@ -64,7 +64,7 @@ http://localhost:8000/frontend/
 The production image is built from this directory and published to GitHub Container Registry:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1
 ```
 
 The GitHub Actions workflow lives at:
@@ -74,6 +74,12 @@ The GitHub Actions workflow lives at:
 ```
 
 It publishes a multi-architecture image for Raspberry Pi nodes, a `latest` tag from `main`, short SHA tags for debug builds, and version tags for releases.
+
+To prepare the next release tag without hand-editing multiple files, run:
+
+```bash
+uv run python scripts/src/release_dashboard.py <version>
+```
 
 ## Kubernetes Deployment
 
@@ -116,7 +122,7 @@ The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
 2. Create and push a release tag such as `v1.0.0`.
-3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0`.
+3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1`.
 4. Apply the updated manifest.
 5. K3s pulls the image on whichever node schedules the pod.
 

@@ -5,7 +5,7 @@ This dashboard now uses a registry-backed image flow instead of a node-local K3s
 The Deployment pulls:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1
 ```
 
 That removes the old rollout constraint where the pod had to stay on `pi-worker-1` because the image only existed in that node's local containerd store.
@@ -26,6 +26,12 @@ The image workflow lives at:
 ```
 
 For day-to-day development, `main` still publishes `latest` and a short SHA tag. The Kubernetes manifest should use a version tag for normal releases so the deployed version is explicit in git.
+
+Use the release helper to update the pinned image reference across the repo before you tag a release:
+
+```bash
+uv run python scripts/src/release_dashboard.py <version>
+```
 
 ## One-Time GitHub Setup
 
@@ -71,14 +77,18 @@ Use this flow for each dashboard release:
 ```bash
 git checkout main
 git pull
-git tag v1.0.0
-git push origin v1.0.0
+uv run python scripts/src/release_dashboard.py <version>
+git diff
+git commit -am "Release cluster dashboard <version>"
+git push origin main
+git tag <version>
+git push origin <version>
 ```
 
 Wait for the `Build Cluster Dashboard` workflow to publish the tag, then make sure [infra/apps/cluster-dashboard/k8s/deployment.yaml](infra/apps/cluster-dashboard/k8s/deployment.yaml) points at the same version:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0
+ghcr.io/m-ryan-nugent/cluster-dashboard:<version>
 ```
 
 Apply the manifest after the image exists in GHCR:
@@ -88,7 +98,7 @@ kubectl apply -f infra/apps/cluster-dashboard/k8s/deployment.yaml
 kubectl rollout status deployment/cluster-dashboard -n homelab
 ```
 
-For the next release, bump both places together, for example from `v1.0.0` to `v1.1.0`.
+The helper updates the deployment manifest and the versioned GHCR references in the release docs together.
 
 ## Pull a Fresh Image After a New GitHub Build
 
