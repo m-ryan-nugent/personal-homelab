@@ -64,7 +64,7 @@ http://localhost:8000/frontend/
 The production image is built from this directory and published to GitHub Container Registry:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:latest
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0
 ```
 
 The GitHub Actions workflow lives at:
@@ -73,7 +73,7 @@ The GitHub Actions workflow lives at:
 .github/workflows/build-cluster-dashboard.yml
 ```
 
-It publishes a multi-architecture image for Raspberry Pi nodes and also adds a commit-based SHA tag for rollback/debugging.
+It publishes a multi-architecture image for Raspberry Pi nodes, a `latest` tag from `main`, short SHA tags for debug builds, and version tags for releases.
 
 ## Kubernetes Deployment
 
@@ -115,9 +115,12 @@ The Deployment no longer depends on:
 The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
-2. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:latest`.
-3. Apply manifests or restart the Deployment.
-4. K3s pulls the image on whichever node schedules the pod.
+2. Create and push a release tag such as `v1.0.0`.
+3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.0`.
+4. Apply the updated manifest.
+5. K3s pulls the image on whichever node schedules the pod.
+
+`latest` is still available for development, but the Deployment should point at an explicit release tag.
 
 The kiosk should continue to load the app at:
 
