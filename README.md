@@ -92,7 +92,7 @@ In progress - cluster operations, dashboard deployment, and documentation
 The cluster dashboard is built as a static nginx image and published to:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2
 ```
 
 The release workflow keeps Kubernetes pinned to an explicit version tag instead of deploying `latest` by default.

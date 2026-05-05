@@ -133,7 +133,7 @@ One traced failure path looked like this:
 - The Deployment itself was in a partial rollout: the live dashboard was still coming from an older healthy pod on `pi-worker-1`, while Kubernetes was also trying to start a newer `cluster-dashboard:v3` pod on `pi-worker-3`.
 - That new pod failed because the image was only present locally on `pi-worker-1` and was missing on `pi-worker-3`.
 
-That failure mode should no longer be the default operating model. The current manifests pull a versioned GHCR image such as `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1` with `imagePullPolicy: IfNotPresent` and do not pin the pod to `pi-worker-1`.
+That failure mode should no longer be the default operating model. The current manifests pull a versioned GHCR image such as `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2` with `imagePullPolicy: IfNotPresent` and do not pin the pod to `pi-worker-1`.
 
 Current rollout expectation:
 

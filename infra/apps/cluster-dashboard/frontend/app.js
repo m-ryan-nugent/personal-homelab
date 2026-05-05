@@ -19,6 +19,7 @@ function setOverview(data) {
 function createNodeCard(node) {
     const template = document.getElementById("node-card-template");
     const fragment = template.content.cloneNode(true);
+    const temperatureRow = fragment.querySelector(".node-temperature-row");
 
     fragment.querySelector(".card-title").textContent = node.name;
     fragment.querySelector(".status-badge").textContent = node.status;
@@ -26,6 +27,11 @@ function createNodeCard(node) {
     fragment.querySelector(".node-model").textContent = node.model;
     fragment.querySelector(".node-ip").textContent = node.ip;
     fragment.querySelector(".node-purpose").textContent = node.purpose;
+
+    if (typeof node.temperatureC === "number") {
+        fragment.querySelector(".node-temperature").textContent = `${node.temperatureC.toFixed(1)} C`;
+        temperatureRow.hidden = false;
+    }
 
     return fragment;
 }
@@ -49,8 +55,21 @@ function createServiceCard(service) {
 
     const fragment = template.content.cloneNode(true);
     const card = fragment.querySelector(".service-card");
+    const statusBadge = fragment.querySelector(".service-status");
+    const isConfigured = Boolean(service.url);
+    const status = service.status || (isConfigured ? "Live" : "Planned");
 
-    card.href = service.url || "#";
+    if (isConfigured) {
+        card.href = service.url;
+    } else {
+        card.removeAttribute("href");
+        card.removeAttribute("target");
+        card.classList.add("service-card-disabled");
+        card.setAttribute("aria-disabled", "true");
+    }
+
+    statusBadge.textContent = status;
+    statusBadge.classList.add(isConfigured ? "service-status-live" : "service-status-planned");
     fragment.querySelector(".card-title").textContent = service.name;
     fragment.querySelector(".service-description").textContent = service.description || "";
 

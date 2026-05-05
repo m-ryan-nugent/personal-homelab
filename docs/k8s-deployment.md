@@ -5,7 +5,7 @@ This dashboard now uses a registry-backed image flow instead of a node-local K3s
 The Deployment pulls:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2
 ```
 
 That removes the old rollout constraint where the pod had to stay on `pi-worker-1` because the image only existed in that node's local containerd store.

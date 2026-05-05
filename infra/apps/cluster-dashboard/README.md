@@ -39,9 +39,46 @@ k8s/
 ## Features
 - Cluster overview header
 - Node cards for each Raspberry Pi
-- Service cards for key tools and apps
+- Service cards that distinguish live endpoints from planned services
+- Optional per-node `temperatureC` support in the JSON config
 - Dark, monitor-friendly styling
 - JSON-driven rendering
+
+## Config Notes
+
+The dashboard reads its display data from `config/nodes.json` in local development and from the ConfigMap in Kubernetes.
+
+Service entries can either be live links:
+
+```json
+{
+    "name": "Cluster Dashboard",
+    "url": "http://10.0.0.101:30080/frontend/",
+    "status": "Live",
+    "description": "Current kiosk dashboard served from K3s"
+}
+```
+
+or planned entries without a URL yet:
+
+```json
+{
+    "name": "Grafana",
+    "status": "Planned",
+    "description": "Monitoring and metrics UI once the stack is deployed"
+}
+```
+
+When you are ready to surface Raspberry Pi temperatures, add an optional `temperatureC` field to any node:
+
+```json
+{
+    "name": "pi-worker-1",
+    "temperatureC": 48.6
+}
+```
+
+The node card will show the temperature row automatically when that field is present.
 
 ## Local Development
 
@@ -64,7 +101,7 @@ http://localhost:8000/frontend/
 The production image is built from this directory and published to GitHub Container Registry:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2
 ```
 
 The GitHub Actions workflow lives at:
@@ -122,7 +159,7 @@ The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
 2. Create and push a release tag such as `<version>`.
-3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.1`.
+3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2`.
 4. Apply the updated manifest.
 5. K3s pulls the image on whichever node schedules the pod.
 
@@ -154,7 +191,7 @@ The dashboard is displayed on a dedicated Raspberry Pi node (`pi-worker-1`) usin
 The kiosk points to the Kubernetes-hosted dashboard, not a local server.
 
 ## Planned Improvements
-- Replace placeholder service links
 - Add real-time status data
+- Source live node temperatures from the cluster or a lightweight collector
 - Add backend API
 - Run in kiosk mode on the external monitor

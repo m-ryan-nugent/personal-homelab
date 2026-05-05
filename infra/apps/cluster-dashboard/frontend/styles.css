@@ -206,6 +206,36 @@ h1 {
   background: linear-gradient(180deg, rgba(24, 33, 66, 0.96), rgba(18, 25, 51, 0.96));
 }
 
+.service-card-disabled {
+  cursor: default;
+  opacity: 0.84;
+}
+
+.service-card-disabled:hover {
+  transform: none;
+  border-color: var(--border);
+}
+
+.service-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.service-status-live {
+  background: rgba(53, 201, 139, 0.14);
+  color: var(--good);
+  border: 1px solid rgba(53, 201, 139, 0.35);
+}
+
+.service-status-planned {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(122, 162, 255, 0.35);
+}
+
 .service-description {
   margin: 0;
   color: var(--muted);
