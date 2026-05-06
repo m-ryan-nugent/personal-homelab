@@ -53,20 +53,12 @@ curl -i http://10.0.0.101:30080/frontend/
 kubectl get svc,pods,endpoints -n homelab
 ```
 
-## Known Dashboard Failure Path
+## Operational Notes
 
-The dashboard issue traced through two separate layers:
+Keep the kiosk pointed at `http://10.0.0.101:30080/frontend/`.
 
-1. The kiosk boot target in `~/.bash_profile` was briefly pointing at the NodePort root instead of `/frontend/`, which explained the plain-text 404 on the monitor.
-2. Once the Chromium target was corrected, K3s was confirmed to be serving the app, but the `cluster-dashboard` Deployment was in a partially broken rollout.
+For current operations:
 
-The working dashboard traffic was still being handled by an older healthy pod on `pi-worker-1` using a local image, while Kubernetes was trying and failing to start a newer `cluster-dashboard:v3` pod on `pi-worker-3` where that image did not exist.
-
-That was the old node-local image workflow. The current Deployment uses the GHCR image and is no longer intended to be pinned to `pi-worker-1`.
-
-Operational takeaway:
-
-- Keep the kiosk pointed at `http://10.0.0.101:30080/frontend/`
-- Verify rollout health with `kubectl get deploy,rs,pods -n homelab -o wide`
-- Restart the Deployment after a new GHCR build if you want the cluster to pull the newest `latest` image
-- Use [k8s-deployment.md](k8s-deployment.md) for the current registry-backed deployment procedure
+- apply updated manifests after a new release instead of relying on node-local images
+- verify rollout health with `kubectl get deploy,rs,pods -n homelab -o wide`
+- use [k8s-deployment.md](k8s-deployment.md) for the current registry-backed deployment and automated node metric sync procedure

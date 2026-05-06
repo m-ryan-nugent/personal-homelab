@@ -17,12 +17,8 @@ spec:
           restartPolicy: Never
           containers:
             - name: sync-temperatures
-              image: python:3.14-alpine
+              image: ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.3
               imagePullPolicy: IfNotPresent
-              command:
-                - /bin/sh
-                - -c
-                - apk add --no-cache openssh-client >/dev/null && python /app/sync_temperatures.py
               env:
                 - name: SSH_USER
                   value: pi
@@ -40,9 +36,6 @@ spec:
                   cpu: 100m
                   memory: 128Mi
               volumeMounts:
-                - name: sync-script
-                  mountPath: /app
-                  readOnly: true
                 - name: dashboard-config
                   mountPath: /config
                   readOnly: true
@@ -50,10 +43,6 @@ spec:
                   mountPath: /ssh
                   readOnly: true
           volumes:
-            - name: sync-script
-              configMap:
-                name: cluster-dashboard-temperature-sync-script
-                defaultMode: 0555
             - name: dashboard-config
               configMap:
                 name: cluster-dashboard-config

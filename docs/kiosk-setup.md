@@ -122,42 +122,14 @@ kubectl describe deployment cluster-dashboard -n homelab
 kubectl describe pod -n homelab <failing-pod>
 ```
 
-## Known Rollout Failure (April 2026)
+## Operational Checks
 
-This section is historical context for the pre-GHCR deployment flow.
-
-One traced failure path looked like this:
-
-- The kiosk boot command had been launching the NodePort root URL instead of `/frontend/`, which produced the original 404 on the monitor.
-- After fixing the boot URL, the dashboard was confirmed to be served through K3s by checking the `cluster-dashboard` NodePort Service, Pod, and Endpoints from `pi-master`.
-- The Deployment itself was in a partial rollout: the live dashboard was still coming from an older healthy pod on `pi-worker-1`, while Kubernetes was also trying to start a newer `cluster-dashboard:v3` pod on `pi-worker-3`.
-- That new pod failed because the image was only present locally on `pi-worker-1` and was missing on `pi-worker-3`.
-
-That failure mode should no longer be the default operating model. The current manifests pull a versioned GHCR image such as `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2` with `imagePullPolicy: IfNotPresent` and do not pin the pod to `pi-worker-1`.
-
-Current rollout expectation:
-
-- push dashboard changes to GitHub
-- let GitHub Actions publish the GHCR image
-- restart the Deployment when you want the cluster to pull the newest image
-- keep the kiosk URL fixed at `http://10.0.0.101:30080/frontend/`
-
-Important detail for K3s/containerd:
-
-- The working image on `pi-worker-1` appeared as `docker.io/library/cluster-dashboard:local`, not just `cluster-dashboard:local`.
-- To reuse that image for the rollout, tag it on `pi-worker-1` as `docker.io/library/cluster-dashboard:v3`.
-- The Deployment should then be pinned to `pi-worker-1` so the kiosk node keeps running the dashboard pod that has the local image.
-
-Useful node-side check:
+For the current registry-backed flow, prefer these checks:
 
 ```bash
-sudo k3s ctr -n k8s.io images ls | grep cluster-dashboard
-```
-
-For the current registry-backed flow, prefer these checks instead:
-
-```bash
-kubectl rollout restart deployment/cluster-dashboard -n homelab
+kubectl apply -f infra/apps/cluster-dashboard/k8s/deployment.yaml
 kubectl rollout status deployment/cluster-dashboard -n homelab
 kubectl get pods -n homelab -o wide
 ```
+
+Keep the kiosk URL fixed at `http://10.0.0.101:30080/frontend/`. If the dashboard looks stale after a release, check rollout state first, then verify the current ConfigMap if you are also using the automated node metric sync.

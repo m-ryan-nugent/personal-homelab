@@ -14,10 +14,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "infra/apps/cluster-dashboard/config/nodes.json"
 CONFIGMAP_PATH = REPO_ROOT / "infra/apps/cluster-dashboard/k8s/configmap-config.yaml"
 TEMP_RE = re.compile(r"temp=([0-9]+(?:\.[0-9]+)?)'C")
-REMOTE_COMMANDS = (
+TEMPERATURE_COMMANDS = (
     "vcgencmd measure_temp",
     "cat /sys/class/thermal/thermal_zone0/temp",
 )
+LOAD_AVERAGE_COMMAND = "cat /proc/loadavg"
+UPTIME_COMMAND = "cat /proc/uptime"
 
 
 def parse_args() -> argparse.Namespace:
@@ -86,6 +88,29 @@ def parse_temperature_output(output: str) -> float:
     raise ValueError(f"unrecognized temperature output: {text!r}")
 
 
+def parse_load_average_output(output: str) -> float:
+    token = output.strip().split()[0]
+    return float(token)
+
+
+def parse_uptime_output(output: str) -> float:
+    token = output.strip().split()[0]
+    return float(token)
+
+
+def format_uptime(seconds: float) -> str:
+    total_seconds = max(0, int(seconds))
+    days, remainder = divmod(total_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
+
 def run_remote_command(host: str, ssh_user: str, command: str, timeout: int) -> subprocess.CompletedProcess[str]:
     ssh_command = [
         "ssh",
@@ -107,32 +132,51 @@ def run_remote_command(host: str, ssh_user: str, command: str, timeout: int) -> 
     )
 
 
-def collect_temperature(node: dict, ssh_user: str, timeout: int) -> float:
+def collect_metric(host: str, ssh_user: str, timeout: int, command: str, parser, label: str):
+    try:
+        result = run_remote_command(host, ssh_user, command, timeout)
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"{label}: command timed out") from error
+
+    if result.returncode != 0:
+        message = result.stderr.strip() or result.stdout.strip() or f"exit {result.returncode}"
+        raise RuntimeError(f"{label}: {message}")
+
+    try:
+        return parser(result.stdout)
+    except (IndexError, ValueError) as error:
+        raise RuntimeError(f"{label}: {error}") from error
+
+
+def collect_temperature(host: str, ssh_user: str, timeout: int) -> float:
+    errors: list[str] = []
+    for command in TEMPERATURE_COMMANDS:
+        try:
+            return round(collect_metric(host, ssh_user, timeout, command, parse_temperature_output, "temperature"), 1)
+        except RuntimeError as error:
+            errors.append(f"{command}: {error}")
+
+    joined = "; ".join(errors)
+    raise RuntimeError(joined)
+
+
+def collect_node_metrics(node: dict, ssh_user: str, timeout: int) -> dict:
     host = node.get("ip")
     if not host:
         raise RuntimeError(f"node {node.get('name', '<unknown>')} is missing an IP address")
 
-    errors: list[str] = []
-    for command in REMOTE_COMMANDS:
-        try:
-            result = run_remote_command(host, ssh_user, command, timeout)
-        except subprocess.TimeoutExpired:
-            errors.append(f"{command}: command timed out")
-            continue
+    temperature = collect_temperature(host, ssh_user, timeout)
+    load_average = round(
+        collect_metric(host, ssh_user, timeout, LOAD_AVERAGE_COMMAND, parse_load_average_output, "load average"),
+        2,
+    )
+    uptime_seconds = collect_metric(host, ssh_user, timeout, UPTIME_COMMAND, parse_uptime_output, "uptime")
 
-        if result.returncode != 0:
-            message = result.stderr.strip() or result.stdout.strip() or f"exit {result.returncode}"
-            errors.append(f"{command}: {message}")
-            continue
-
-        try:
-            return round(parse_temperature_output(result.stdout), 1)
-        except ValueError as error:
-            errors.append(f"{command}: {error}")
-
-    node_name = node.get("name", host)
-    joined = "; ".join(errors)
-    raise RuntimeError(f"{node_name}: {joined}")
+    return {
+        "temperatureC": temperature,
+        "loadAverage1m": load_average,
+        "uptimeHuman": format_uptime(uptime_seconds),
+    }
 
 
 def collect_temperatures(data: dict, ssh_user: str, timeout: int, requested_names: list[str]) -> tuple[dict, list[str], int]:
@@ -143,11 +187,13 @@ def collect_temperatures(data: dict, ssh_user: str, timeout: int, requested_name
 
     for node in selected_nodes:
         try:
-            node["temperatureC"] = collect_temperature(node, ssh_user, timeout)
+            node.update(collect_node_metrics(node, ssh_user, timeout))
             success_count += 1
         except RuntimeError as error:
             node.pop("temperatureC", None)
-            failures.append(str(error))
+            node.pop("loadAverage1m", None)
+            node.pop("uptimeHuman", None)
+            failures.append(f"{node.get('name', node.get('ip', '<unknown>'))}: {error}")
 
     if success_count == 0:
         raise RuntimeError("temperature collection failed for every selected node")
@@ -208,10 +254,13 @@ def main() -> int:
 
     for node in updated_data.get("nodes", []):
         if "temperatureC" in node and (not args.node or node.get("name") in args.node):
-            print(f"- {node['name']}: {node['temperatureC']:.1f} C")
+            print(
+                f"- {node['name']}: {node['temperatureC']:.1f} C | "
+                f"load {node['loadAverage1m']:.2f} | up {node['uptimeHuman']}"
+            )
 
     if failures:
-        print("Temperature collection warnings:", file=sys.stderr)
+        print("Node metric warnings:", file=sys.stderr)
         for failure in failures:
             print(f"- {failure}", file=sys.stderr)
 

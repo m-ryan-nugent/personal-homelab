@@ -20,6 +20,8 @@ function createNodeCard(node) {
     const template = document.getElementById("node-card-template");
     const fragment = template.content.cloneNode(true);
     const temperatureRow = fragment.querySelector(".node-temperature-row");
+    const loadRow = fragment.querySelector(".node-load-row");
+    const uptimeRow = fragment.querySelector(".node-uptime-row");
 
     fragment.querySelector(".card-title").textContent = node.name;
     fragment.querySelector(".status-badge").textContent = node.status;
@@ -31,6 +33,16 @@ function createNodeCard(node) {
     if (typeof node.temperatureC === "number") {
         fragment.querySelector(".node-temperature").textContent = `${node.temperatureC.toFixed(1)} C`;
         temperatureRow.hidden = false;
+    }
+
+    if (typeof node.loadAverage1m === "number") {
+        fragment.querySelector(".node-load").textContent = node.loadAverage1m.toFixed(2);
+        loadRow.hidden = false;
+    }
+
+    if (typeof node.uptimeHuman === "string" && node.uptimeHuman) {
+        fragment.querySelector(".node-uptime").textContent = node.uptimeHuman;
+        uptimeRow.hidden = false;
     }
 
     return fragment;
@@ -58,6 +70,10 @@ function createServiceCard(service) {
     const statusBadge = fragment.querySelector(".service-status");
     const isConfigured = Boolean(service.url);
     const status = service.status || (isConfigured ? "Live" : "Planned");
+    const statusClass = {
+        Live: "service-status-live",
+        External: "service-status-external",
+    }[status] || "service-status-planned";
 
     if (isConfigured) {
         card.href = service.url;
@@ -69,7 +85,7 @@ function createServiceCard(service) {
     }
 
     statusBadge.textContent = status;
-    statusBadge.classList.add(isConfigured ? "service-status-live" : "service-status-planned");
+    statusBadge.classList.add(statusClass);
     fragment.querySelector(".card-title").textContent = service.name;
     fragment.querySelector(".service-description").textContent = service.description || "";
 

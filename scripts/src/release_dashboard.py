@@ -8,9 +8,14 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-IMAGE_REPOSITORY = "ghcr.io/m-ryan-nugent/cluster-dashboard"
+IMAGE_REPOSITORIES = (
+    "ghcr.io/m-ryan-nugent/cluster-dashboard",
+    "ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync",
+)
 VERSION_RE = re.compile(r"^v\d+\.\d+\.\d+$")
-IMAGE_RE = re.compile(rf"{re.escape(IMAGE_REPOSITORY)}:v\d+\.\d+\.\d+")
+IMAGE_RE = re.compile(
+    rf"(?P<repo>{'|'.join(re.escape(repository) for repository in IMAGE_REPOSITORIES)}):v\d+\.\d+\.\d+"
+)
 DEPLOYMENT_FILE = Path("infra/apps/cluster-dashboard/k8s/deployment.yaml")
 
 
@@ -22,10 +27,10 @@ class TargetFile:
 
 TARGET_FILES = (
     TargetFile(Path("infra/apps/cluster-dashboard/k8s/deployment.yaml")),
+    TargetFile(Path("infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml")),
     TargetFile(Path("docs/k8s-deployment.md")),
     TargetFile(Path("infra/apps/cluster-dashboard/README.md")),
     TargetFile(Path("README.md")),
-    TargetFile(Path("docs/kiosk-setup.md")),
 )
 
 
@@ -59,7 +64,7 @@ def validate_version(version: str) -> None:
 def update_target(target: TargetFile, version: str, dry_run: bool) -> int:
     absolute_path = REPO_ROOT / target.path
     original_text = absolute_path.read_text()
-    updated_text, replacements = IMAGE_RE.subn(f"{IMAGE_REPOSITORY}:{version}", original_text)
+    updated_text, replacements = IMAGE_RE.subn(lambda match: f"{match.group('repo')}:{version}", original_text)
 
     if replacements < target.minimum_replacements:
         raise RuntimeError(
@@ -74,7 +79,7 @@ def update_target(target: TargetFile, version: str, dry_run: bool) -> int:
 
 def get_deployment_version() -> str:
     deployment_text = (REPO_ROOT / DEPLOYMENT_FILE).read_text()
-    images = set(IMAGE_RE.findall(deployment_text))
+    images = {match.group(0) for match in IMAGE_RE.finditer(deployment_text)}
 
     if len(images) != 1:
         raise RuntimeError(
@@ -87,18 +92,19 @@ def get_deployment_version() -> str:
 def check_target(target: TargetFile, expected_image: str) -> None:
     absolute_path = REPO_ROOT / target.path
     text = absolute_path.read_text()
-    images = IMAGE_RE.findall(text)
+    images = [match.group(0) for match in IMAGE_RE.finditer(text)]
 
     if len(images) < target.minimum_replacements:
         raise RuntimeError(
             f"expected at least {target.minimum_replacements} image reference updates in {target.path}, found {len(images)}"
         )
 
-    mismatches = sorted({image for image in images if image != expected_image})
+    expected_version = expected_image.rsplit(":", maxsplit=1)[1]
+    mismatches = sorted({image for image in images if not image.endswith(f":{expected_version}")})
     if mismatches:
         mismatch_list = ", ".join(mismatches)
         raise RuntimeError(
-            f"{target.path} contains dashboard image references that do not match {expected_image}: {mismatch_list}"
+            f"{target.path} contains image references that do not match version {expected_version}: {mismatch_list}"
         )
 
 
@@ -109,8 +115,8 @@ def run_check() -> int:
         print(error, file=sys.stderr)
         return 1
 
-    expected_image = f"{IMAGE_REPOSITORY}:{version}"
-    print(f"Checking cluster-dashboard release references against {expected_image}")
+    expected_image = f"{IMAGE_REPOSITORIES[0]}:{version}"
+    print(f"Checking cluster-dashboard release references against version {version}")
 
     try:
         for target in TARGET_FILES:

@@ -5,7 +5,13 @@ This dashboard now uses a registry-backed image flow instead of a node-local K3s
 The Deployment pulls:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3
+```
+
+The metric sync CronJob uses:
+
+```text
+ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.3
 ```
 
 That removes the old rollout constraint where the pod had to stay on `pi-worker-1` because the image only existed in that node's local containerd store.
@@ -27,7 +33,7 @@ The image workflow lives at:
 
 For day-to-day development, `main` still publishes `latest` and a short SHA tag. The Kubernetes manifest should use a version tag for normal releases so the deployed version is explicit in git.
 
-Use the release helper to update the pinned image reference across the repo before you tag a release:
+Use the release helper to update the pinned image references across the repo before you tag a release:
 
 ```bash
 uv run python scripts/src/release_dashboard.py <version>
@@ -76,9 +82,9 @@ http://10.0.0.101:30080/frontend/
 
 The nginx config also redirects `/` to `/frontend/`, but keeping the kiosk on the explicit path avoids ambiguity.
 
-## Update Dashboard Temperatures
+## Update Dashboard Metrics
 
-The dashboard can now be refreshed from the repo by collecting Raspberry Pi temperatures over SSH and syncing them into the ConfigMap source file:
+The dashboard can now be refreshed from the repo by collecting Raspberry Pi temperatures, load averages, and uptime over SSH and syncing them into the ConfigMap source file:
 
 ```bash
 cd ~/personal-homelab
@@ -97,15 +103,16 @@ uv run python scripts/src/sync_dashboard_temperatures.py --node pi-worker-1
 
 The Deployment now mounts the dashboard config directory directly instead of using `subPath`, so ConfigMap updates can propagate into the running pod without restarting the Deployment.
 
-## Automate Temperature Updates With a CronJob
+## Automate Node Metrics With a CronJob
 
-The repo now includes a Kubernetes-owned temperature sync path so the cluster can refresh dashboard temperatures without relying on a laptop:
+The repo now includes a Kubernetes-owned sync path so the cluster can refresh dashboard node metrics without relying on a laptop:
 
-- `infra/apps/cluster-dashboard/k8s/configmap-temperature-sync-script.yaml`
 - `infra/apps/cluster-dashboard/k8s/temperature-sync-rbac.yaml`
 - `infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml`
 
-The `CronJob` runs every 5 minutes, SSHes to the Pi nodes using a mounted private key, and patches the `cluster-dashboard-config` ConfigMap directly.
+The `CronJob` runs every 5 minutes, SSHes to the Pi nodes using a mounted private key, collects temperature, 1-minute load average, and uptime, and patches the `cluster-dashboard-config` ConfigMap directly.
+
+Before you apply the updated `CronJob` manifest, push the repo changes and cut the next release tag so the versioned `cluster-dashboard-temperature-sync` image exists in GHCR.
 
 ### 1. Create a dedicated SSH key for the CronJob
 
@@ -137,7 +144,6 @@ kubectl create secret generic cluster-dashboard-ssh \
 ### 3. Apply the automation manifests
 
 ```bash
-kubectl apply -f infra/apps/cluster-dashboard/k8s/configmap-temperature-sync-script.yaml
 kubectl apply -f infra/apps/cluster-dashboard/k8s/temperature-sync-rbac.yaml
 kubectl apply -f infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml
 ```
@@ -154,7 +160,7 @@ kubectl logs -n homelab job/cluster-dashboard-temperature-sync-manual
 kubectl get configmap cluster-dashboard-config -n homelab -o yaml
 ```
 
-If the manual job succeeds, the scheduled `CronJob` will keep updating temperatures in the live dashboard ConfigMap.
+If the manual job succeeds, the scheduled `CronJob` will keep updating node metrics in the live dashboard ConfigMap.
 
 ## Release Checklist
 

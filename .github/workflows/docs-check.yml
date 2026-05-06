@@ -6,10 +6,13 @@ on:
       - .github/workflows/docs-check.yml
       - scripts/src/release_dashboard.py
       - infra/apps/cluster-dashboard/k8s/deployment.yaml
+      - infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml
       - docs/k8s-deployment.md
       - infra/apps/cluster-dashboard/README.md
+      - infra/apps/cluster-dashboard/temperature-sync/**
       - README.md
       - docs/kiosk-setup.md
+      - docs/monitor-setup.md
   push:
     branches:
       - main
@@ -17,10 +20,13 @@ on:
       - .github/workflows/docs-check.yml
       - scripts/src/release_dashboard.py
       - infra/apps/cluster-dashboard/k8s/deployment.yaml
+      - infra/apps/cluster-dashboard/k8s/cronjob-temperature-sync.yaml
       - docs/k8s-deployment.md
       - infra/apps/cluster-dashboard/README.md
+      - infra/apps/cluster-dashboard/temperature-sync/**
       - README.md
       - docs/kiosk-setup.md
+      - docs/monitor-setup.md
 
 jobs:
   cluster-dashboard-release-drift:

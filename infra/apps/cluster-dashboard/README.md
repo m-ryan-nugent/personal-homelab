@@ -40,7 +40,7 @@ k8s/
 - Cluster overview header
 - Node cards for each Raspberry Pi
 - Service cards that distinguish live endpoints from planned services
-- Optional per-node `temperatureC` support in the JSON config
+- Optional per-node `temperatureC`, `loadAverage1m`, and `uptimeHuman` support in the JSON config
 - Dark, monitor-friendly styling
 - JSON-driven rendering
 
@@ -80,6 +80,16 @@ When you are ready to surface Raspberry Pi temperatures, add an optional `temper
 
 The node card will show the temperature row automatically when that field is present.
 
+The same pattern works for load average and uptime:
+
+```json
+{
+    "name": "pi-worker-1",
+    "loadAverage1m": 0.42,
+    "uptimeHuman": "2d 6h"
+}
+```
+
 To collect those temperatures from the Pis over SSH and sync them into both the local JSON file and the Kubernetes ConfigMap, run:
 
 ```bash
@@ -106,13 +116,14 @@ kubectl apply -f infra/apps/cluster-dashboard/k8s/configmap-config.yaml
 
 The Deployment now mounts the entire `/usr/share/nginx/html/config` directory instead of a `subPath`, so ConfigMap updates can refresh in the running pod without a rollout restart.
 
-If you want the cluster to refresh temperatures automatically, the Kubernetes manifests now include:
+If you want the cluster to refresh node metrics automatically, the Kubernetes manifests now include:
 
-- `k8s/configmap-temperature-sync-script.yaml`
 - `k8s/temperature-sync-rbac.yaml`
 - `k8s/cronjob-temperature-sync.yaml`
 
-That `CronJob` reads the current `nodes.json` from the live dashboard ConfigMap, collects temperatures over SSH using a mounted key, and patches the ConfigMap in-cluster every 5 minutes.
+That `CronJob` runs from the dedicated `cluster-dashboard-temperature-sync` image, reads the current `nodes.json` from the live dashboard ConfigMap, collects temperature, load average, and uptime over SSH using a mounted key, and patches the ConfigMap in-cluster every 5 minutes.
+
+After you push these repo changes, cut the next release tag before applying the updated `CronJob` manifest so the versioned sync image exists in GHCR.
 
 ## Local Development
 
@@ -135,7 +146,13 @@ http://localhost:8000/frontend/
 The production image is built from this directory and published to GitHub Container Registry:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3
+```
+
+The automated metric sync job has its own image:
+
+```text
+ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.3
 ```
 
 The GitHub Actions workflow lives at:
@@ -144,7 +161,7 @@ The GitHub Actions workflow lives at:
 .github/workflows/build-cluster-dashboard.yml
 ```
 
-It publishes a multi-architecture image for Raspberry Pi nodes, a `latest` tag from `main`, short SHA tags for debug builds, and version tags for releases.
+It publishes multi-architecture images for both the dashboard and the metric sync job, plus a `latest` tag from `main`, short SHA tags for debug builds, and version tags for releases.
 
 To prepare the next release tag without hand-editing multiple files, run:
 
@@ -186,14 +203,13 @@ The earlier node-local image workflow has been removed from the manifests.
 The Deployment no longer depends on:
 
 - `nodeSelector` or `nodeName` pinning for `pi-worker-1`
-- `imagePullPolicy: Never`
 - retagging images directly inside K3s/containerd
 
 The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
 2. Create and push a release tag such as `<version>`.
-3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.2`.
+3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3`.
 4. Apply the updated manifest.
 5. K3s pulls the image on whichever node schedules the pod.
 
