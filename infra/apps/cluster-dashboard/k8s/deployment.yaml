@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: cluster-dashboard
-          image: ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3
+          image: ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.4
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

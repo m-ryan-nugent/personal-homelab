@@ -146,13 +146,13 @@ http://localhost:8000/frontend/
 The production image is built from this directory and published to GitHub Container Registry:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3
+ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.4
 ```
 
 The automated metric sync job has its own image:
 
 ```text
-ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.3
+ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.4
 ```
 
 The GitHub Actions workflow lives at:
@@ -209,7 +209,7 @@ The expected rollout flow is now:
 
 1. Push dashboard changes to `main`.
 2. Create and push a release tag such as `<version>`.
-3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.3`.
+3. GitHub Actions publishes `ghcr.io/m-ryan-nugent/cluster-dashboard:v1.0.4`.
 4. Apply the updated manifest.
 5. K3s pulls the image on whichever node schedules the pod.
 

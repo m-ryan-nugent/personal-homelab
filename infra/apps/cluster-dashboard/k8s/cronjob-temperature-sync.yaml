@@ -17,7 +17,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: sync-temperatures
-              image: ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.3
+              image: ghcr.io/m-ryan-nugent/cluster-dashboard-temperature-sync:v1.0.4
               imagePullPolicy: IfNotPresent
               env:
                 - name: SSH_USER
